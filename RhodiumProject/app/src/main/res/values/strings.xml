@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Rhodium Project</string>
+    <string name="SignalStrength">signal_strength</string>
+    <string name="StrengthData">Get Data</string>
+    <string name="RSRQ">RSRQ</string>
+    <string name="Serving_cell_strength">Serving cell strength</string>
+    <string name="Neighbor_cell_strength">Neighbor cell strength</string>
+    <string name="Serving_cell_quality">Serving cell quality</string>
+    <string name="Neighbor_cell_quality">Neighbor cell quality</string>
+</resources>
