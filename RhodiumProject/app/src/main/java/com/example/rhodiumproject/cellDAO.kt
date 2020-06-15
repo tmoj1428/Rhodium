@@ -1,4 +1,5 @@
 package com.example.rhodiumproject
+import androidx.lifecycle.LiveData
 import androidx.room.*
 
 @Dao
@@ -14,7 +15,7 @@ interface cellDao {
     fun deleteUsers(cell : Cell)
 
     @Query("SELECT * from LTE_table ORDER BY cellId ASC")
-    fun getAllCellInfo(): List<Cell>
+    fun getAllCellInfo(): LiveData<List<Cell>>
 
     @Query("DELETE FROM LTE_table")
     suspend fun deleteAll()
