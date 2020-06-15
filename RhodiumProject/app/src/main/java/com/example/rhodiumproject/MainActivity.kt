@@ -17,6 +17,7 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import android.telephony.CellInfoGsm
+import android.telephony.CellSignalStrengthWcdma as wc
 
 
 
@@ -50,8 +51,15 @@ class MainActivity : AppCompatActivity() {
         //Set signal strength and quality to 0
         var servingCellSignalStrength = 0
         var servingCellSignalQuality = 0
+        var servingCellSignalnoise = 0
         var neighborCellSignalStrength = 0
         var neighborCellSignalQuality = 0
+        var neighborCellSignalnoise = 0
+        var servingCellTAC = 0
+        var servingCellLAC = 0
+        var servingCellPLMN = ""
+        var servingCellRAC = 0
+        var servingCellId = 0
 
         //Set an instance of telephony manager
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
@@ -64,7 +72,6 @@ class MainActivity : AppCompatActivity() {
 
         //Check type of network and assign parameters to signal strength and quality
         val cellInfoList = tm.allCellInfo
-
         //Put location check high priority to check
         val locationRequest = LocationRequest.create().apply {
             interval = 10000
@@ -84,26 +91,33 @@ class MainActivity : AppCompatActivity() {
                     if (cellInfo is CellInfoLte) {
                         servingCellSignalStrength = cellInfo.cellSignalStrength.rsrp
                         servingCellSignalQuality = cellInfo.cellSignalStrength.rsrq
+                        servingCellSignalnoise = cellInfo.cellSignalStrength.rssnr
+                        servingCellTAC =  cellInfo.cellIdentity.tac
+                        servingCellPLMN = tm.networkOperator
+                        servingCellId =  cellInfo.cellIdentity.ci
                     }
                     else if (cellInfo is CellInfoWcdma && servingCellSignalStrength == 0) {
-                        val a = cellInfo.cellSignalStrength.asuLevel
                         val b = cellInfo.cellSignalStrength.dbm
                         servingCellSignalStrength = b
-                        servingCellSignalQuality = 2 * a - 113 - b
+                        servingCellLAC = cellInfo.cellIdentity.lac
+                        servingCellPLMN = tm.networkOperator
+                        servingCellId = cellInfo.cellIdentity.cid
                     } else if (cellInfo is CellInfoGsm && servingCellSignalStrength == 0) {
                         val gsm = cellInfo.cellSignalStrength
                         servingCellSignalStrength = gsm.dbm
+                        servingCellPLMN = tm.networkOperator
+                        servingCellLAC =  cellInfo.cellIdentity.lac
+                        servingCellId = cellInfo.cellIdentity.cid
                     }
 
                 }else{
                     if (cellInfo is CellInfoLte) {
                         neighborCellSignalStrength = cellInfo.cellSignalStrength.rsrp
                         neighborCellSignalQuality = cellInfo.cellSignalStrength.rsrq
+                        neighborCellSignalnoise = cellInfo.cellSignalStrength.rssnr
                     } else if (cellInfo is CellInfoWcdma && neighborCellSignalStrength == 0) {
-                        val a = cellInfo.cellSignalStrength.asuLevel
                         val b = cellInfo.cellSignalStrength.dbm
                         neighborCellSignalStrength = b
-                        neighborCellSignalQuality = 2 * a - 113 - b
                     } else if (cellInfo is CellInfoGsm && neighborCellSignalStrength == 0) {
                         val gsm = cellInfo.cellSignalStrength
                         neighborCellSignalStrength = gsm.dbm
