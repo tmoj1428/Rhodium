@@ -1,34 +1,44 @@
 package com.example.rhodiumproject
 
+import android.Manifest
 import android.content.Context
+import android.content.Intent
+import android.content.IntentSender
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.widget.Button
-import android.widget.TextView
-import android.Manifest
-import android.content.IntentSender
 import android.os.Looper
-import android.telephony.*
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoWcdma
+import android.telephony.TelephonyManager
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
-import android.telephony.CellInfoGsm
-import android.telephony.CellSignalStrengthWcdma as wc
-
-
 
 
 class MainActivity : AppCompatActivity() {
-
     protected val REQUEST_CHECK_SETTINGS = 0x1
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        //Remove project title
+        try {
+            this.supportActionBar!!.hide()
+        } catch (e: NullPointerException) {
+        }
+
+        //Change activity button to map activity
+        val button = findViewById<Button>(R.id.button)
+        button.setOnClickListener {
+            val intent = Intent(this, mapActivity::class.java)
+            startActivity(intent)
+        }
         val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(object : Runnable {
             override fun run() {
@@ -36,17 +46,9 @@ class MainActivity : AppCompatActivity() {
                 mainHandler.postDelayed(this, 5000)
             }
         })
-        findViewById<Button>(R.id.getDataButton).setOnClickListener{
-            LTESignalStrength()
-        }
     }
-    
+
     private fun LTESignalStrength (){
-        //Connect text and text2 to text views
-        val text = findViewById<TextView>(R.id.ServingCellStrength)
-        val text2 = findViewById<TextView>(R.id.NeighborCellStrength)
-        val text3 = findViewById<TextView>(R.id.ServingCellQuality)
-        val text4 = findViewById<TextView>(R.id.NeighborCellQuality)
 
         //Set signal strength and quality to 0
         var servingCellSignalStrength = 0
@@ -124,10 +126,6 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
-            text.text = "Serving Cell Strength : " + servingCellSignalStrength.toString()
-            text2.text =  "Neighbor Cell Strength : " + neighborCellSignalStrength.toString()
-            text3.text =  "Serving Cell Quality : " + servingCellSignalQuality.toString()
-            text4.text =  "Neighbor Cell Quality : " + neighborCellSignalQuality.toString()
         }
 
         //Build a request to turn on the location
