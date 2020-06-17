@@ -1,4 +1,5 @@
 package com.example.rhodiumproject
+
 import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
@@ -6,28 +7,28 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
-class WordListAdapter internal constructor(
+class CellListAdapter internal constructor(
     context: Context
-) : RecyclerView.Adapter<WordListAdapter.WordViewHolder>() {
+) : RecyclerView.Adapter<CellListAdapter.CellViewHolder>() {
 
     private val inflater: LayoutInflater = LayoutInflater.from(context)
-    private var cells = emptyList<Cell>() // Cached copy of words
+    private var cells = emptyList<LTE_Cell>() // Cached copy of words
 
     inner class CellViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val wordItemView: TextView = itemView.findViewById(R.id.textView)
+        val cellItemView: TextView = itemView.findViewById(R.id.ServingCellId)
     }
 
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): WordViewHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CellViewHolder {
         val itemView = inflater.inflate(R.layout.recyclerview_item, parent, false)
         return CellViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: CellViewHolder, position: Int) {
         val current = cells[position]
-        holder.wordItemView.text = current.cellId.toString()
+        holder.cellItemView.text = current.cellId.toString()
     }
 
-    internal fun setWords(words: List<Cell>) {
+    internal fun setWords(words: List<LTE_Cell>) {
         this.cells = words
         notifyDataSetChanged()
     }

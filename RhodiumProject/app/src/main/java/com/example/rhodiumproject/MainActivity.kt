@@ -1,5 +1,4 @@
 package com.example.rhodiumproject
-
 import android.content.Context
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
@@ -17,10 +16,9 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import android.telephony.CellInfoGsm
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import android.telephony.CellSignalStrengthWcdma as wc
-
-
-
 
 class MainActivity : AppCompatActivity() {
 
@@ -39,6 +37,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.getDataButton).setOnClickListener{
             LTESignalStrength()
         }
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
+        val adapter = CellListAdapter(this)
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
     
     private fun LTESignalStrength (){
@@ -47,6 +49,7 @@ class MainActivity : AppCompatActivity() {
         val text2 = findViewById<TextView>(R.id.NeighborCellStrength)
         val text3 = findViewById<TextView>(R.id.ServingCellQuality)
         val text4 = findViewById<TextView>(R.id.NeighborCellQuality)
+        //val text5 = findViewById<TextView>(R.id.ServingCellId)
 
         //Set signal strength and quality to 0
         var servingCellSignalStrength = 0
@@ -92,11 +95,10 @@ class MainActivity : AppCompatActivity() {
                         servingCellSignalStrength = cellInfo.cellSignalStrength.rsrp
                         servingCellSignalQuality = cellInfo.cellSignalStrength.rsrq
                         servingCellSignalnoise = cellInfo.cellSignalStrength.rssnr
-                        servingCellTAC =  cellInfo.cellIdentity.tac
+                        servingCellTAC = cellInfo.cellIdentity.tac
                         servingCellPLMN = tm.networkOperator
-                        servingCellId =  cellInfo.cellIdentity.ci
-                    }
-                    else if (cellInfo is CellInfoWcdma && servingCellSignalStrength == 0) {
+                        servingCellId = cellInfo.cellIdentity.ci
+                    } else if (cellInfo is CellInfoWcdma && servingCellSignalStrength == 0) {
                         val b = cellInfo.cellSignalStrength.dbm
                         servingCellSignalStrength = b
                         servingCellLAC = cellInfo.cellIdentity.lac
@@ -106,11 +108,11 @@ class MainActivity : AppCompatActivity() {
                         val gsm = cellInfo.cellSignalStrength
                         servingCellSignalStrength = gsm.dbm
                         servingCellPLMN = tm.networkOperator
-                        servingCellLAC =  cellInfo.cellIdentity.lac
+                        servingCellLAC = cellInfo.cellIdentity.lac
                         servingCellId = cellInfo.cellIdentity.cid
                     }
 
-                }else{
+                } else {
                     if (cellInfo is CellInfoLte) {
                         neighborCellSignalStrength = cellInfo.cellSignalStrength.rsrp
                         neighborCellSignalQuality = cellInfo.cellSignalStrength.rsrq
@@ -124,6 +126,7 @@ class MainActivity : AppCompatActivity() {
                     }
                 }
             }
+            //text5.text = "Cell id : " + servingCellId.toString()
             text.text = "Serving Cell Strength : " + servingCellSignalStrength.toString()
             text2.text =  "Neighbor Cell Strength : " + neighborCellSignalStrength.toString()
             text3.text =  "Serving Cell Quality : " + servingCellSignalQuality.toString()

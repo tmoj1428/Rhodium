@@ -5,6 +5,7 @@
     <string name="Neighbor_cell_strength">Neighbor cell strength</string>
     <string name="Serving_cell_quality">Serving cell quality</string>
     <string name="Neighbor_cell_quality">Neighbor cell quality</string>
+    <string name="Srving_cell_id">Neighbor cell quality</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
