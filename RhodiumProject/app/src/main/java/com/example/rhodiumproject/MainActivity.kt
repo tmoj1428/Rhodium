@@ -145,4 +145,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    /**
+     * Enables the My Location layer if the fine location permission has been granted.
+     */
 }
