@@ -6,7 +6,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class WordViewModel(application: Application) : AndroidViewModel(application) {
+class CellViewModel(application: Application) : AndroidViewModel(application) {
 
     private val LTErepository: LTECellRepository
     //private val UMTSrepository: UMTSCellRepository

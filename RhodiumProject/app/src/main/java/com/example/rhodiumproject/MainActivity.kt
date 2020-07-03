@@ -7,6 +7,8 @@ import android.os.Handler
 import android.widget.Button
 import android.widget.TextView
 import android.Manifest
+import android.app.Activity
+import android.content.Intent
 import android.content.IntentSender
 import android.os.Looper
 import android.telephony.*
@@ -16,17 +18,31 @@ import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 import android.telephony.CellInfoGsm
+import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.observe
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+import java.util.Observer
 import android.telephony.CellSignalStrengthWcdma as wc
 
 class MainActivity : AppCompatActivity() {
 
     protected val REQUEST_CHECK_SETTINGS = 0x1
-
+    private val newCellActivityRequestCode = 1
+    private lateinit var cellViewModel: CellViewModel
+    @Override
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        val button = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab)
+        button.setOnClickListener{
+            val intent = Intent(this, NewCellActivity::class.java)
+            startActivity(intent)
+        }
+
         val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(object : Runnable {
             override fun run() {
@@ -34,13 +50,43 @@ class MainActivity : AppCompatActivity() {
                 mainHandler.postDelayed(this, 5000)
             }
         })
+
         findViewById<Button>(R.id.getDataButton).setOnClickListener{
             LTESignalStrength()
         }
+
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
         val adapter = CellListAdapter(this)
         recyclerView.adapter = adapter
         recyclerView.layoutManager = LinearLayoutManager(this)
+
+        cellViewModel = ViewModelProvider(this).get(CellViewModel::class.java)
+        cellViewModel.LTE_allCells.observe(this, androidx.lifecycle.Observer{ cell -> cell?.let { adapter.setCells(it) }} )
+
+        val fab = findViewById<FloatingActionButton>(R.id.fab)
+        fab.setOnClickListener {
+            val intent = Intent(this@MainActivity, NewCellActivity::class.java)
+            startActivityForResult(intent, newCellActivityRequestCode)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
+            data?.getStringArrayExtra(NewCellActivity.EXTRA_REPLY)?.let {
+                val LTEcell = LTE_Cell(it[0].toInt(), it[1], it[2], it[3], it[4], it[5], it[6])
+
+                cellViewModel.LTEinsert(LTEcell)
+            }
+        }
+        else {
+            Toast.makeText(
+                applicationContext,
+                R.string.empty_not_saved,
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
     
     private fun LTESignalStrength (){

@@ -86,13 +86,13 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     LTECellDao.deleteAll()
 
                     // Add sample words.
-                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1")
+                        var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1")
                     LTECellDao.insert(LTE_Cell)
-                    LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2")
+                    LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2", "2")
                     LTECellDao.insert(LTE_Cell)
 
                     // TODO: Add your own words!
-                    LTE_Cell = LTE_Cell(3, "TODO!", "TODO!", "TODO!", "TODO!", "TODO!")
+                    LTE_Cell = LTE_Cell(3, "3", "3", "3", "3", "3", "3")
                     LTECellDao.insert(LTE_Cell)
                 }
             }

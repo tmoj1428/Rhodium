@@ -28,8 +28,8 @@ class CellListAdapter internal constructor(
         holder.cellItemView.text = current.cellId.toString()
     }
 
-    internal fun setWords(words: List<LTE_Cell>) {
-        this.cells = words
+    internal fun setCells(cells: List<LTE_Cell>) {
+        this.cells = cells
         notifyDataSetChanged()
     }
 
