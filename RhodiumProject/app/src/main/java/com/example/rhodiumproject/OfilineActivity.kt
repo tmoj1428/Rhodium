@@ -17,7 +17,7 @@ import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.ArrayList
 
-class mapActivity : AppCompatActivity() {
+class OfilineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
     private var map: MapView? = null
     private var mapController: IMapController? = map?.controller
@@ -60,7 +60,7 @@ class mapActivity : AppCompatActivity() {
         super.onPause()
         map?.onPause()
     }
-    //lasg as sjfh asf
+
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<String?>,
