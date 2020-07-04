@@ -1,6 +1,7 @@
 package com.example.rhodiumproject
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -26,40 +27,46 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.ArrayList
+import android.content.Intent
+import android.widget.Toast
+import androidx.lifecycle.ViewModelProvider
+//import androidx.lifecycle.observe
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.floatingactionbutton.FloatingActionButton
+
+
 
 class OnlineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
-    private var map: MapView? = null
-    private var mapController: IMapController? = map?.controller
-    private val startPoint: GeoPoint = GeoPoint(35.6892, 51.3890)
-    protected val REQUEST_CHECK_SETTINGS = 0x1
+    private val newCellActivityRequestCode = 1
+    private lateinit var cellViewModel: CellViewModel
+//    private var map: MapView? = null
+//    private var mapController: IMapController? = map?.controller
+//    private val startPoint: GeoPoint = GeoPoint(35.6892, 51.3890)
+//    protected val REQUEST_CHECK_SETTINGS = 0x1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_online)
-        val ctx = applicationContext
-        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
-        map = findViewById<MapView>(R.id.map)
-        map?.controller?.setZoom(12)
-        map?.controller?.setCenter(startPoint)
-        map?.setBuiltInZoomControls(true)
-        map?.setMultiTouchControls(true)
-        map?.setTileSource(TileSourceFactory.MAPNIK)
-        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(applicationContext), map)
-        mLocationOverlay.enableMyLocation()
-        map?.overlays?.add(mLocationOverlay)
-        mLocationOverlay.enableFollowLocation()
-        mLocationOverlay.isDrawAccuracyEnabled
-        val handler = Handler()
-        handler.postDelayed({
-            map?.controller?.setZoom(18)
-            map?.controller?.setCenter(mLocationOverlay.myLocation)
-        }, 5000)
-        requestPermissionsIfNecessary(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            )
-        )
+//        val ctx = applicationContext
+//        Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
+//        map = findViewById<MapView>(R.id.map)
+//        map?.controller?.setZoom(12)
+//        map?.controller?.setCenter(startPoint)
+//        map?.setBuiltInZoomControls(true)
+//        map?.setMultiTouchControls(true)
+//        map?.setTileSource(TileSourceFactory.MAPNIK)
+//        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(applicationContext), map)
+//        mLocationOverlay.enableMyLocation()
+//        map?.overlays?.add(mLocationOverlay)
+//        mLocationOverlay.enableFollowLocation()
+//        mLocationOverlay.isDrawAccuracyEnabled
+
+        val button = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab)
+        button.setOnClickListener{
+            val intent = Intent(this, NewCellActivity::class.java)
+            startActivity(intent)
+        }
         val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(object : Runnable {
             override fun run() {
@@ -67,6 +74,58 @@ class OnlineActivity : AppCompatActivity() {
                 mainHandler.postDelayed(this, 5000)
             }
         })
+
+//        val handler = Handler()
+//        handler.postDelayed({
+//            map?.controller?.setZoom(18)
+//            map?.controller?.setCenter(mLocationOverlay.myLocation)
+//        }, 5000)
+//        requestPermissionsIfNecessary(
+//            arrayOf(
+//                Manifest.permission.ACCESS_FINE_LOCATION,
+//                Manifest.permission.WRITE_EXTERNAL_STORAGE
+//            )
+//        )
+//        val mainHandler = Handler(Looper.getMainLooper())
+//        mainHandler.post(object : Runnable {
+//            override fun run() {
+//                LTESignalStrength()
+//                mainHandler.postDelayed(this, 5000)
+//            }
+//        })
+
+        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
+        val adapter = CellListAdapter(this)
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
+
+        cellViewModel = ViewModelProvider(this).get(CellViewModel::class.java)
+        cellViewModel.LTE_allCells.observe(this, androidx.lifecycle.Observer{ cell -> cell?.let { adapter.setCells(it) }} )
+
+        val fab = findViewById<FloatingActionButton>(R.id.fab)
+        fab.setOnClickListener {
+            val intent = Intent(this@OnlineActivity, NewCellActivity::class.java)
+            startActivityForResult(intent, newCellActivityRequestCode)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
+            data?.getStringArrayExtra(NewCellActivity.EXTRA_REPLY)?.let {
+                val LTEcell = LTE_Cell(it[0].toInt(), it[1], it[2], it[3], it[4], it[5], it[6])
+
+                cellViewModel.LTEinsert(LTEcell)
+            }
+        }
+        else {
+            Toast.makeText(
+                applicationContext,
+                "",
+                Toast.LENGTH_LONG
+            ).show()
+        }
     }
 
     private fun LTESignalStrength (){
@@ -96,19 +155,19 @@ class OnlineActivity : AppCompatActivity() {
         //Check type of network and assign parameters to signal strength and quality
         val cellInfoList = tm.allCellInfo
         //Put location check high priority to check
-        val locationRequest = LocationRequest.create().apply {
-            interval = 10000
-            fastestInterval = 5000
-            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-        }
-        //Build a location request
-        val builder = LocationSettingsRequest.Builder()
-            .addLocationRequest(locationRequest)
+//        val locationRequest = LocationRequest.create().apply {
+//            interval = 10000
+//            fastestInterval = 5000
+//            priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+//        }
+//        //Build a location request
+//        val builder = LocationSettingsRequest.Builder()
+//            .addLocationRequest(locationRequest)
 
         //Build a listener to check whether the location is on or not
-        val client: SettingsClient = LocationServices.getSettingsClient(this)
-        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
-        task.addOnSuccessListener { locationSettingsResponse ->
+//        val client: SettingsClient = LocationServices.getSettingsClient(this)
+//        val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
+//        task.addOnSuccessListener { locationSettingsResponse ->
             for (cellInfo in cellInfoList) {
                 if (cellInfo.isRegistered) {
                     if (cellInfo is CellInfoLte) {
@@ -150,61 +209,61 @@ class OnlineActivity : AppCompatActivity() {
         }
 
         //Build a request to turn on the location
-        task.addOnFailureListener { exception ->
-            if (exception is ResolvableApiException){
-                try {
-                    exception.startResolutionForResult(this@OnlineActivity,
-                        REQUEST_CHECK_SETTINGS)
-                }
-                catch (sendEx: IntentSender.SendIntentException) {
-                }
-            }
-        }
+//        task.addOnFailureListener { exception ->
+//            if (exception is ResolvableApiException){
+//                try {
+//                    exception.startResolutionForResult(this@OnlineActivity,
+//                        REQUEST_CHECK_SETTINGS)
+//                }
+//                catch (sendEx: IntentSender.SendIntentException) {
+//                }
+//            }
+//        }
     }
-    override fun onResume() {
-        super.onResume()
-        map?.onResume()
-
-    }
-
-    override fun onPause() {
-        super.onPause()
-        map?.onPause()
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String?>,
-        grantResults: IntArray
-    ) {
-        val permissionsToRequest: ArrayList<String?> = ArrayList()
-        for (i in grantResults.indices) {
-            permissionsToRequest.add(permissions[i])
-        }
-        if (permissionsToRequest.size > 0) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.toArray(arrayOfNulls(0)),
-                REQUEST_PERMISSIONS_REQUEST_CODE
-            )
-        }
-    }
-    private fun requestPermissionsIfNecessary(permissions: Array<String>) {
-        val permissionsToRequest: ArrayList<String> = ArrayList()
-        for (permission in permissions) {
-            if (ContextCompat.checkSelfPermission(this, permission)
-                != PackageManager.PERMISSION_GRANTED
-            ) {
-                // Permission is not granted
-                permissionsToRequest.add(permission)
-            }
-        }
-        if (permissionsToRequest.size > 0) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.toArray(arrayOfNulls(0)),
-                REQUEST_PERMISSIONS_REQUEST_CODE
-            )
-        }
-    }
-}
+//    override fun onResume() {
+//        super.onResume()
+//        map?.onResume()
+//
+//    }
+//
+//    override fun onPause() {
+//        super.onPause()
+//        map?.onPause()
+//    }
+//
+//    override fun onRequestPermissionsResult(
+//        requestCode: Int,
+//        permissions: Array<String?>,
+//        grantResults: IntArray
+//    ) {
+//        val permissionsToRequest: ArrayList<String?> = ArrayList()
+//        for (i in grantResults.indices) {
+//            permissionsToRequest.add(permissions[i])
+//        }
+//        if (permissionsToRequest.size > 0) {
+//            ActivityCompat.requestPermissions(
+//                this,
+//                permissionsToRequest.toArray(arrayOfNulls(0)),
+//                REQUEST_PERMISSIONS_REQUEST_CODE
+//            )
+//        }
+//    }
+//    private fun requestPermissionsIfNecessary(permissions: Array<String>) {
+//        val permissionsToRequest: ArrayList<String> = ArrayList()
+//        for (permission in permissions) {
+//            if (ContextCompat.checkSelfPermission(this, permission)
+//                != PackageManager.PERMISSION_GRANTED
+//            ) {
+//                // Permission is not granted
+//                permissionsToRequest.add(permission)
+//            }
+//        }
+//        if (permissionsToRequest.size > 0) {
+//            ActivityCompat.requestPermissions(
+//                this,
+//                permissionsToRequest.toArray(arrayOfNulls(0)),
+//                REQUEST_PERMISSIONS_REQUEST_CODE
+//            )
+//        }
+//    }
+//}
