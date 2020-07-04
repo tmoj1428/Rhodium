@@ -8,6 +8,8 @@ import android.content.IntentSender
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
@@ -28,6 +30,13 @@ abstract class NewCellActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_cell)
+        val mainHandler = Handler(Looper.getMainLooper())
+        mainHandler.post(object : Runnable {
+            override fun run() {
+                LTESignalStrength()
+                mainHandler.postDelayed(this, 5000)
+            }
+        })
         val id = findViewById<TextView>(R.id.ID)
         val cellIDView = findViewById<TextView>(R.id.cell_id)
         val RSRPView = findViewById<TextView>(R.id.RSRP)
@@ -62,7 +71,6 @@ abstract class NewCellActivity : AppCompatActivity() {
     }
     private fun LTESignalStrength (){
         //Connect text and text2 to text views
-        //val idView = findViewById<TextView>(R.id.ID)
         val cellIDView = findViewById<TextView>(R.id.cell_id)
         val RSRPView = findViewById<TextView>(R.id.RSRP)
         val RSRPView_N = findViewById<TextView>(R.id.RSRP_N)
@@ -70,7 +78,7 @@ abstract class NewCellActivity : AppCompatActivity() {
         val RSRQView_N = findViewById<TextView>(R.id.RSRQ_N)
         val PLMNView = findViewById<TextView>(R.id.PLMN)
         val TACView = findViewById<TextView>(R.id.TAC)
-        //val text5 = findViewById<TextView>(R.id.ServingCellId)
+        val CINRView = findViewById<TextView>(R.id.CINR)
 
         //Set signal strength and quality to 0
         //var servingCellSignalStrength = 0
@@ -114,28 +122,29 @@ abstract class NewCellActivity : AppCompatActivity() {
             for (cellInfo in cellInfoList) {
                 if (cellInfo.isRegistered) {
                     if (cellInfo is CellInfoLte) {
-                        //servingCellSignalStrength = cellInfo.cellSignalStrength.rsrp
                         RSRP = cellInfo.cellSignalStrength.rsrp
                         RSRQ = cellInfo.cellSignalStrength.rsrq
                         servingCellSignalnoise = cellInfo.cellSignalStrength.rssnr
                         servingCellTAC = cellInfo.cellIdentity.tac
                         servingCellPLMN = tm.networkOperator
                         servingCellId = cellInfo.cellIdentity.ci
-                    } else if (cellInfo is CellInfoWcdma && RSRP == 0) {
+                    }
+                    else if (cellInfo is CellInfoWcdma && RSRP == 0) {
                         val b = cellInfo.cellSignalStrength.dbm
                         RSRP = b
                         servingCellLAC = cellInfo.cellIdentity.lac
                         servingCellPLMN = tm.networkOperator
                         servingCellId = cellInfo.cellIdentity.cid
-                    } else if (cellInfo is CellInfoGsm && RSRP == 0) {
+                    }
+                    else if (cellInfo is CellInfoGsm && RSRP == 0) {
                         val gsm = cellInfo.cellSignalStrength
                         RSRP = gsm.dbm
                         servingCellPLMN = tm.networkOperator
                         servingCellLAC = cellInfo.cellIdentity.lac
                         servingCellId = cellInfo.cellIdentity.cid
                     }
-
-                } else {
+                }
+                else {
                     if (cellInfo is CellInfoLte) {
                         RSRP_neighbor = cellInfo.cellSignalStrength.rsrp
                         RSRQ_neighbor = cellInfo.cellSignalStrength.rsrq
@@ -156,6 +165,8 @@ abstract class NewCellActivity : AppCompatActivity() {
             cellIDView.text = "Serving Cell ID : " + servingCellId.toString()
             PLMNView.text = "Serving Cell PLMN : " + servingCellPLMN
             TACView.text = "Serving Cell TAC : " + servingCellTAC.toString()
+            CINRView.text = "Serving Cell CINR : " + servingCellSignalnoise.toString()
+
         }
 
         //Build a request to turn on the location
