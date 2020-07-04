@@ -65,16 +65,16 @@ class OnlineActivity : AppCompatActivity() {
 
         val button = findViewById<com.google.android.material.floatingactionbutton.FloatingActionButton>(R.id.fab)
         button.setOnClickListener{
-            val intent = Intent(this, NewCellActivity::class.java)
+            val intent = Intent(this, ServingCellActivity::class.java)
             startActivity(intent)
         }
-        val mainHandler = Handler(Looper.getMainLooper())
+        /*val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(object : Runnable {
             override fun run() {
                 LTESignalStrength()
                 mainHandler.postDelayed(this, 5000)
             }
-        })
+        })*/
 
 //        val handler = Handler()
 //        handler.postDelayed({
@@ -103,14 +103,9 @@ class OnlineActivity : AppCompatActivity() {
         cellViewModel = ViewModelProvider(this).get(CellViewModel::class.java)
         cellViewModel.LTE_allCells.observe(this, androidx.lifecycle.Observer{ cell -> cell?.let { adapter.setCells(it) }} )
 
-        val fab = findViewById<FloatingActionButton>(R.id.fab)
-        fab.setOnClickListener {
-            val intent = Intent(this@OnlineActivity, NewCellActivity::class.java)
-            startActivityForResult(intent, newCellActivityRequestCode)
-        }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    /*override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
@@ -127,7 +122,7 @@ class OnlineActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG
             ).show()
         }
-    }
+    }*/
 
     private fun LTESignalStrength (){
 
