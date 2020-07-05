@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.SyncStateContract.Helpers.insert
 import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
@@ -35,6 +36,7 @@ class ServingCellActivity : AppCompatActivity() {
             override fun run() {
                 LTESignalStrength()
                 mainHandler.postDelayed(this, 5000)
+
             }
         })
         val all = findViewById<Button>(R.id.all)
@@ -44,7 +46,7 @@ class ServingCellActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    /*override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
@@ -61,7 +63,8 @@ class ServingCellActivity : AppCompatActivity() {
                 Toast.LENGTH_LONG
             ).show()
         }
-    }
+    }*/
+
     private fun LTESignalStrength (){
         //Connect text and text2 to text views
         val cellIDView = findViewById<TextView>(R.id.cell_id)
@@ -159,7 +162,8 @@ class ServingCellActivity : AppCompatActivity() {
             PLMNView.text = "Serving Cell PLMN : " + servingCellPLMN
             TACView.text = "Serving Cell TAC : " + servingCellTAC.toString()
             CINRView.text = "Serving Cell CINR : " + servingCellSignalnoise.toString()
-
+            val info = LTE_Cell(ID = System.currentTimeMillis(),cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN)
+            cellViewModel.LTEinsert(info)
         }
 
         //Build a request to turn on the location

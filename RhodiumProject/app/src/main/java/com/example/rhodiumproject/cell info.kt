@@ -10,7 +10,7 @@ import androidx.room.PrimaryKey
 data class LTE_Cell(
     @PrimaryKey (autoGenerate = true)
     @ColumnInfo(name = "ID")
-    var ID : Int,
+    var ID : Long,
     var cellId: String?,
     var RSRP: String?,
     var RSRQ: String?,
