@@ -36,7 +36,7 @@ class MainActivity : AppCompatActivity() {
         //Change activity button to map activity
         val button = findViewById<Button>(R.id.button)
         button.setOnClickListener {
-            val intent = Intent(this, ServingCellActivity::class.java)
+            val intent = Intent(this, OnlineActivity::class.java)
             startActivity(intent)
         }
 
