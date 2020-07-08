@@ -17,7 +17,8 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".ServingCellActivity"></activity>
+        <activity android:name=".cell_info"></activity>
+        <activity android:name=".ServingCellActivity" />
         <activity android:name=".NewCellActivity" />
         <activity android:name=".OfilineActivity" />
         <activity android:name=".OnlineActivity" />

@@ -1,36 +1,36 @@
 package com.example.rhodiumproject
 
 import android.Manifest
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.SyncStateContract.Helpers.insert
 import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
 
+
 class ServingCellActivity : AppCompatActivity() {
     protected val REQUEST_CHECK_SETTINGS = 0x1
     private val newCellActivityRequestCode = 1
-    private lateinit var cellViewModel: CellViewModel
+    private var cellViewModel: CellViewModel? = null
+    private var db:CellRoomDatabase? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_cell)
+
+       // ViewModelProvider.of(this, cellViewModel).get(ServingCellActivity::class.java)
         val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post(object : Runnable {
             override fun run() {
@@ -41,9 +41,31 @@ class ServingCellActivity : AppCompatActivity() {
         })
         val all = findViewById<Button>(R.id.all)
         all.setOnClickListener {
-            val intent = Intent(this, OnlineActivity::class.java)
-            startActivity(intent)
+            val list = db?.LTECellDao()?.AllCell()
+            if (list != null) {
+                for (cell in list) {
+                    //println(cell.PLMN)
+                }
+            }
+            //val intent = Intent(this, OnlineActivity::class.java)
+            //startActivity(intent)
+            //var cells = cellViewModel?.LTE_allCells
+            //cells
         }
+        val save = findViewById<Button>(R.id.save)
+        save.setOnClickListener {
+            //val id = findViewById<TextView>(R.id.ID)
+            val cellIDView = findViewById<TextView>(R.id.cell_id)
+            val RSRPView = findViewById<TextView>(R.id.RSRP)
+            val RSRQView = findViewById<TextView>(R.id.RSRQ)
+            val CINRView = findViewById<TextView>(R.id.CINR)
+            val TACView = findViewById<TextView>(R.id.TAC)
+            val PLMNView = findViewById<TextView>(R.id.PLMN)
+            val info = LTE_Cell(cellId = cellIDView.toString(), RSRP = RSRPView.toString(), RSRQ = RSRQView.toString(), CINR = CINRView.toString(), TAC = TACView.toString(), PLMN = PLMNView.toString())
+            //db?.LTECellDao()?.insert(info)
+            cellViewModel?.LTEinsert(info)
+        }
+
     }
 
     /*override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -162,8 +184,9 @@ class ServingCellActivity : AppCompatActivity() {
             PLMNView.text = "Serving Cell PLMN : " + servingCellPLMN
             TACView.text = "Serving Cell TAC : " + servingCellTAC.toString()
             CINRView.text = "Serving Cell CINR : " + servingCellSignalnoise.toString()
-            val info = LTE_Cell(ID = System.currentTimeMillis(),cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN)
-            cellViewModel.LTEinsert(info)
+            val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN)
+            //db?.LTECellDao()?.insert(info)
+            cellViewModel?.LTEinsert(info)
         }
 
         //Build a request to turn on the location
