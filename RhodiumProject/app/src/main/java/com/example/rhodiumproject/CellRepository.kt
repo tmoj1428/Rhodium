@@ -13,9 +13,6 @@ class LTECellRepository(private val cellDao : LTECellDao) {
     suspend fun insert(cell: LTE_Cell) {
         cellDao.insert(cell)
     }
-    fun allCell(){
-        cellDao.AllCell()
-    }
 }
 class UMTSCellRepository(private val cellDao : UMTSCellDao) {
 
