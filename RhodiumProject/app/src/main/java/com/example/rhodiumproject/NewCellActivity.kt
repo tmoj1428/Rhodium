@@ -1,19 +1,36 @@
 package com.example.rhodiumproject
 
+import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.content.IntentSender
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.telephony.CellInfoGsm
+import android.telephony.CellInfoLte
+import android.telephony.CellInfoWcdma
+import android.telephony.TelephonyManager
 import android.text.TextUtils
 import android.widget.Button
 import android.widget.TextView
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.*
+import com.google.android.gms.tasks.Task
+
 
 abstract class NewCellActivity : AppCompatActivity() {
-
+    protected val REQUEST_CHECK_SETTINGS = 0x1
     abstract fun LTECellDao(): LTECellDao
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_new_cell)
+        val mainHandler = Handler(Looper.getMainLooper())
         val id = findViewById<TextView>(R.id.ID)
         val cellIDView = findViewById<TextView>(R.id.cell_id)
         val RSRPView = findViewById<TextView>(R.id.RSRP)

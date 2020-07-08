@@ -1,8 +1,6 @@
 package com.example.rhodiumproject
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -79,14 +77,16 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     LTECellDao.deleteAll()
 
                     // Add sample words.
-                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1")
+                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1", 35.6892, 51.3890)
                     LTECellDao.insert(LTE_Cell)
-                    LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2", "2")
-                    LTECellDao.insert(LTE_Cell)
+                    //LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2", "2")
+                    //LTECellDao.insert(LTE_Cell)
 
                     // TODO: Add your own words!
-                    LTE_Cell = LTE_Cell(3, "3", "3", "3", "3", "3", "3")
-                    LTECellDao.insert(LTE_Cell)
+                    //LTE_Cell = LTE_Cell(3, "3", "3", "3", "3", "3", "3")
+                    //LTECellDao.insert(LTE_Cell)
+                    //LTE_Cell = LTE_Cell(4, "3", "3", "3", "3", "3", "3")
+                    //LTECellDao.insert(LTE_Cell)
                 }
             }
         }
@@ -106,13 +106,13 @@ abstract class CellRoomDatabase : RoomDatabase() {
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     CellRoomDatabase::class.java,
-                    "word_database"
+                    "cell_database"
                 )
                     .addCallback(CellDatabaseCallback(scope))
                     .build()
                 INSTANCE = instance
-                // return instance
-                instance
+                return instance
+                //instance
             }
         }
     }

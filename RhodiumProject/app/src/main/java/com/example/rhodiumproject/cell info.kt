@@ -1,7 +1,5 @@
 package com.example.rhodiumproject
 
-import androidx.annotation.NonNull
-import androidx.annotation.Nullable
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -10,13 +8,15 @@ import androidx.room.PrimaryKey
 data class LTE_Cell(
     @PrimaryKey (autoGenerate = true)
     @ColumnInfo(name = "ID")
-    var ID : Int,
+    var ID: Long?=null,
     var cellId: String?,
     var RSRP: String?,
     var RSRQ: String?,
     var CINR: String?,
     var TAC: String?,
-    var PLMN: String?
+    var PLMN: String?,
+    var latitude: Double,
+    var longtitude: Double
 )
 
 @Entity(tableName = "UMTS_table")

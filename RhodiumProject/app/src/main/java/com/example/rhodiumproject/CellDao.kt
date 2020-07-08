@@ -6,7 +6,7 @@ import androidx.room.*
 interface LTECellDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
-    suspend fun insert(cell : LTE_Cell)
+    fun insert(cell : LTE_Cell)
 
     @Update
     fun updateUsers(cell : LTE_Cell)
@@ -17,8 +17,11 @@ interface LTECellDao {
     @Query("SELECT * from LTE_table ORDER BY cellId ASC")
     fun getAllCellInfo(): LiveData<List<LTE_Cell>>
 
+    @Query("SELECT * from LTE_table ORDER BY cellId ASC")
+    fun AllCell(): List<LTE_Cell>
+
     @Query("DELETE FROM LTE_table")
-    suspend fun deleteAll()
+    fun deleteAll()
 }
 @Dao
 interface UMTSCellDao {
