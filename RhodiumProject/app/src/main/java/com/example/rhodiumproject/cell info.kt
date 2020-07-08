@@ -15,7 +15,7 @@ data class LTE_Cell(
     var CINR: String?,
     var TAC: String?,
     var PLMN: String?,
-    var latitude: Double,
+    var altitude: Double,
     var longtitude: Double
 )
 

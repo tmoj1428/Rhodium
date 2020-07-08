@@ -61,9 +61,9 @@ class ServingCellActivity : AppCompatActivity() {
             val CINRView = findViewById<TextView>(R.id.CINR)
             val TACView = findViewById<TextView>(R.id.TAC)
             val PLMNView = findViewById<TextView>(R.id.PLMN)
-            val info = LTE_Cell(cellId = cellIDView.toString(), RSRP = RSRPView.toString(), RSRQ = RSRQView.toString(), CINR = CINRView.toString(), TAC = TACView.toString(), PLMN = PLMNView.toString())
+            //val info = LTE_Cell(cellId = cellIDView.toString(), RSRP = RSRPView.toString(), RSRQ = RSRQView.toString(), CINR = CINRView.toString(), TAC = TACView.toString(), PLMN = PLMNView.toString())
             //db?.LTECellDao()?.insert(info)
-            cellViewModel?.LTEinsert(info)
+            //cellViewModel?.LTEinsert(info)
         }
 
     }
@@ -184,9 +184,9 @@ class ServingCellActivity : AppCompatActivity() {
             PLMNView.text = "Serving Cell PLMN : " + servingCellPLMN
             TACView.text = "Serving Cell TAC : " + servingCellTAC.toString()
             CINRView.text = "Serving Cell CINR : " + servingCellSignalnoise.toString()
-            val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN)
+            //val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN)
             //db?.LTECellDao()?.insert(info)
-            cellViewModel?.LTEinsert(info)
+            //cellViewModel?.LTEinsert(info)
         }
 
         //Build a request to turn on the location
