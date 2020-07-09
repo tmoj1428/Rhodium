@@ -97,8 +97,8 @@ abstract class CellRoomDatabase : RoomDatabase() {
         private var INSTANCE: CellRoomDatabase? = null
 
         fun getDatabase(
-            context: Context,
-            scope: CoroutineScope
+            context: Context
+           // scope: CoroutineScope
         ): CellRoomDatabase {
             // if the INSTANCE is not null, then return it,
             // if it is, then create the database
@@ -108,7 +108,7 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     CellRoomDatabase::class.java,
                     "cell_database"
                 )
-                    .addCallback(CellDatabaseCallback(scope))
+                    .allowMainThreadQueries()
                     .build()
                 INSTANCE = instance
                 return instance

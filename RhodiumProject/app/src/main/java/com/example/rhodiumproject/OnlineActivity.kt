@@ -37,6 +37,7 @@ class OnlineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
 //    private val newCellActivityRequestCode = 1
 //    private lateinit var cellViewModel: CellViewModel
+    private var db:CellRoomDatabase? = null
     private var map: MapView? = null
     private var cellViewModel: CellViewModel? = null
     private var mapController: IMapController? = map?.controller
@@ -67,7 +68,7 @@ class OnlineActivity : AppCompatActivity() {
         startMarker.setPosition(startPoint)
         map?.overlays?.add(startMarker)
 
-
+        db = CellRoomDatabase.getDatabase(context = this)
         val handler = Handler()
         handler.postDelayed({
             map?.controller?.setZoom(18)
@@ -266,5 +267,20 @@ class OnlineActivity : AppCompatActivity() {
                 REQUEST_PERMISSIONS_REQUEST_CODE
             )
         }
+    }
+    private fun pointer()
+    {
+        var list = db?.LTECellDao()?.AllCell()
+        if (list != null) {
+            for (cell in list)
+            {
+                val startPoint = GeoPoint(cell.altitude, cell.longtitude)
+                val startMarker = Marker(map)
+                startMarker.setPosition(startPoint)
+                map?.overlays?.add(startMarker)
+            }
+        }
+
+
     }
 }
