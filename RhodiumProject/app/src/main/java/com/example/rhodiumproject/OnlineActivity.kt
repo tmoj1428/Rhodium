@@ -15,7 +15,6 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -36,12 +35,14 @@ import java.util.*
 
 class OnlineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
-    //    private val newCellActivityRequestCode = 1
+//    private val newCellActivityRequestCode = 1
 //    private lateinit var cellViewModel: CellViewModel
-    private var cellViewModel: CellViewModel? = null
     private var map: MapView? = null
+    private var cellViewModel: CellViewModel? = null
     private var mapController: IMapController? = map?.controller
     private val startPoint: GeoPoint = GeoPoint(35.6892, 51.3890)
+    private var lat = 0.0
+    private var lon = 0.0
     protected val REQUEST_CHECK_SETTINGS = 0x1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,14 +55,13 @@ class OnlineActivity : AppCompatActivity() {
         map?.setBuiltInZoomControls(true)
         map?.setMultiTouchControls(true)
         map?.setTileSource(TileSourceFactory.MAPNIK)
-        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(applicationContext), map)
+        val loc = GpsMyLocationProvider(applicationContext)
+        var mLocationOverlay = MyLocationNewOverlay(loc, map)
         mLocationOverlay.enableMyLocation()
         map?.overlays?.add(mLocationOverlay)
         mLocationOverlay.enableFollowLocation()
         mLocationOverlay.isDrawAccuracyEnabled
 
-        val lon = mLocationOverlay.myLocation.altitude
-        val lat = mLocationOverlay.myLocation.longitude
         val startPoint = GeoPoint(35.6892, 51.3890)
         val startMarker = Marker(map)
         startMarker.setPosition(startPoint)
@@ -122,25 +122,13 @@ class OnlineActivity : AppCompatActivity() {
 //    }
 
     private fun LTESignalStrength (){
-        //Connect text and text2 to text views
-       /* val cellIDView = findViewById<TextView>(R.id.cell_id)
-        val RSRPView = findViewById<TextView>(R.id.RSRP)
-        val RSRPView_N = findViewById<TextView>(R.id.RSRP_N)
-        val RSRQView = findViewById<TextView>(R.id.RSRQ)
-        val RSRQView_N = findViewById<TextView>(R.id.RSRQ_N)
-        val PLMNView = findViewById<TextView>(R.id.PLMN)
-        val TACView = findViewById<TextView>(R.id.TAC)
-        val CINRView = findViewById<TextView>(R.id.CINR)*/
+
         //Set signal strength and quality to 0
-        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(applicationContext), map)
-        mLocationOverlay.enableMyLocation()
-        val lon = mLocationOverlay.myLocation.altitude
-        val lat = mLocationOverlay.myLocation.longitude
-        var RSRP = 0
-        var RSRQ = 0
+        var servingCellSignalStrength = 0
+        var servingCellSignalQuality = 0
         var servingCellSignalnoise = 0
-        var RSRP_neighbor = 0
-        var RSRQ_neighbor = 0
+        var neighborCellSignalStrength = 0
+        var neighborCellSignalQuality = 0
         var neighborCellSignalnoise = 0
         var servingCellTAC = 0
         var servingCellLAC = 0
@@ -148,6 +136,11 @@ class OnlineActivity : AppCompatActivity() {
         var servingCellRAC = 0
         var servingCellId = 0
 
+        val loc = GpsMyLocationProvider(applicationContext)
+        if (loc.lastKnownLocation != null) {
+            lat = loc.lastKnownLocation.altitude
+            lon = loc.lastKnownLocation.longitude
+        }else{}
         //Set an instance of telephony manager
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
@@ -156,7 +149,6 @@ class OnlineActivity : AppCompatActivity() {
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
-
         //Check type of network and assign parameters to signal strength and quality
         val cellInfoList = tm.allCellInfo
         //Put location check high priority to check
@@ -169,60 +161,52 @@ class OnlineActivity : AppCompatActivity() {
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
 
-        //Build a listener to check whether the location is on or not
+//        Build a listener to check whether the location is on or not
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
         task.addOnSuccessListener { locationSettingsResponse ->
             for (cellInfo in cellInfoList) {
                 if (cellInfo.isRegistered) {
                     if (cellInfo is CellInfoLte) {
-                        RSRP = cellInfo.cellSignalStrength.rsrp
-                        RSRQ = cellInfo.cellSignalStrength.rsrq
+                        servingCellSignalStrength = cellInfo.cellSignalStrength.rsrp
+                        servingCellSignalQuality = cellInfo.cellSignalStrength.rsrq
                         servingCellSignalnoise = cellInfo.cellSignalStrength.rssnr
-                        servingCellTAC = cellInfo.cellIdentity.tac
+                        servingCellTAC =  cellInfo.cellIdentity.tac
                         servingCellPLMN = tm.networkOperator
-                        servingCellId = cellInfo.cellIdentity.ci
+                        servingCellId =  cellInfo.cellIdentity.ci
                     }
-                    else if (cellInfo is CellInfoWcdma && RSRP == 0) {
+                    else if (cellInfo is CellInfoWcdma && servingCellSignalStrength == 0) {
                         val b = cellInfo.cellSignalStrength.dbm
-                        RSRP = b
+                        servingCellSignalStrength = b
                         servingCellLAC = cellInfo.cellIdentity.lac
                         servingCellPLMN = tm.networkOperator
                         servingCellId = cellInfo.cellIdentity.cid
-                    }
-                    else if (cellInfo is CellInfoGsm && RSRP == 0) {
+                    } else if (cellInfo is CellInfoGsm && servingCellSignalStrength == 0) {
                         val gsm = cellInfo.cellSignalStrength
-                        RSRP = gsm.dbm
+                        servingCellSignalStrength = gsm.dbm
                         servingCellPLMN = tm.networkOperator
-                        servingCellLAC = cellInfo.cellIdentity.lac
+                        servingCellLAC =  cellInfo.cellIdentity.lac
                         servingCellId = cellInfo.cellIdentity.cid
                     }
-                }
-                else {
+
+                }else{
                     if (cellInfo is CellInfoLte) {
-                        RSRP_neighbor = cellInfo.cellSignalStrength.rsrp
-                        RSRQ_neighbor = cellInfo.cellSignalStrength.rsrq
+                        neighborCellSignalStrength = cellInfo.cellSignalStrength.rsrp
+                        neighborCellSignalQuality = cellInfo.cellSignalStrength.rsrq
                         neighborCellSignalnoise = cellInfo.cellSignalStrength.rssnr
-                    } else if (cellInfo is CellInfoWcdma && RSRP_neighbor == 0) {
+                    } else if (cellInfo is CellInfoWcdma && neighborCellSignalStrength == 0) {
                         val b = cellInfo.cellSignalStrength.dbm
-                        RSRP_neighbor = b
-                    } else if (cellInfo is CellInfoGsm && RSRP_neighbor == 0) {
+                        neighborCellSignalStrength = b
+                    } else if (cellInfo is CellInfoGsm && neighborCellSignalStrength == 0) {
                         val gsm = cellInfo.cellSignalStrength
-                        RSRP_neighbor = gsm.dbm
+                        neighborCellSignalStrength = gsm.dbm
                     }
                 }
+
+                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lat.toDouble(), longtitude = lon.toDouble())
+                //db?.LTECellDao()?.insert(info)
+                cellViewModel?.LTEinsert(info)
             }
-            /*RSRPView.text = "Serving Cell Strength(RSRP) : " + RSRP.toString()
-            RSRPView_N.text =  "Neighbor Cell Strength(RSRP) : " + RSRP_neighbor.toString()
-            RSRQView.text =  "Serving Cell Quality(RSRQ) : " + RSRQ.toString()
-            RSRQView_N.text =  "Neighbor Cell Quality(RSRQ) : " + RSRQ_neighbor.toString()
-            cellIDView.text = "Serving Cell ID : " + servingCellId.toString()
-            PLMNView.text = "Serving Cell PLMN : " + servingCellPLMN
-            TACView.text = "Serving Cell TAC : " + servingCellTAC.toString()
-            CINRView.text = "Serving Cell CINR : " + servingCellSignalnoise.toString()*/
-            val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = RSRP.toString(), RSRQ = RSRQ.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lon, longtitude = lat)
-            //db?.LTECellDao()?.insert(info)
-            cellViewModel?.LTEinsert(info)
         }
 
         //Build a request to turn on the location
