@@ -1,10 +1,12 @@
 package com.example.rhodiumproject
 
+//import androidx.lifecycle.observe
 import android.Manifest
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import androidx.appcompat.app.AppCompatActivity
+import android.graphics.Color
+import android.graphics.Paint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +15,7 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.google.android.gms.common.api.ResolvableApiException
@@ -23,15 +26,23 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.PathOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
-import java.util.ArrayList
+import java.util.*
+
 
 class OnlineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
+//    private val newCellActivityRequestCode = 1
+//    private lateinit var cellViewModel: CellViewModel
     private var map: MapView? = null
+    private var cellViewModel: CellViewModel? = null
     private var mapController: IMapController? = map?.controller
     private val startPoint: GeoPoint = GeoPoint(35.6892, 51.3890)
+    private var lat = 0.0
+    private var lon = 0.0
     protected val REQUEST_CHECK_SETTINGS = 0x1
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,11 +55,19 @@ class OnlineActivity : AppCompatActivity() {
         map?.setBuiltInZoomControls(true)
         map?.setMultiTouchControls(true)
         map?.setTileSource(TileSourceFactory.MAPNIK)
-        var mLocationOverlay = MyLocationNewOverlay(GpsMyLocationProvider(applicationContext), map)
+        val loc = GpsMyLocationProvider(applicationContext)
+        var mLocationOverlay = MyLocationNewOverlay(loc, map)
         mLocationOverlay.enableMyLocation()
         map?.overlays?.add(mLocationOverlay)
         mLocationOverlay.enableFollowLocation()
         mLocationOverlay.isDrawAccuracyEnabled
+
+        val startPoint = GeoPoint(35.6892, 51.3890)
+        val startMarker = Marker(map)
+        startMarker.setPosition(startPoint)
+        map?.overlays?.add(startMarker)
+
+
         val handler = Handler()
         handler.postDelayed({
             map?.controller?.setZoom(18)
@@ -67,7 +86,40 @@ class OnlineActivity : AppCompatActivity() {
                 mainHandler.postDelayed(this, 5000)
             }
         })
+
+//        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
+//        val adapter = CellListAdapter(this)
+//        recyclerView.adapter = adapter
+//        recyclerView.layoutManager = LinearLayoutManager(this)
+//
+//        cellViewModel = ViewModelProvider(this).get(CellViewModel::class.java)
+//        cellViewModel.LTE_allCells.observe(this, androidx.lifecycle.Observer{ cell -> cell?.let { adapter.setCells(it) }} )
+//
+//        val fab = findViewById<FloatingActionButton>(R.id.fab)
+//        fab.setOnClickListener {
+//            val intent = Intent(this@OnlineActivity, NewCellActivity::class.java)
+//            startActivityForResult(intent, newCellActivityRequestCode)
+//        }
     }
+
+//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//        super.onActivityResult(requestCode, resultCode, data)
+//
+//        if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
+//            data?.getStringArrayExtra(NewCellActivity.EXTRA_REPLY)?.let {
+//                val LTEcell = LTE_Cell(it[0].toInt(), it[1], it[2], it[3], it[4], it[5], it[6])
+//
+//                cellViewModel.LTEinsert(LTEcell)
+//            }
+//        }
+//        else {
+//            Toast.makeText(
+//                applicationContext,
+//                "",
+//                Toast.LENGTH_LONG
+//            ).show()
+//        }
+//    }
 
     private fun LTESignalStrength (){
 
@@ -84,6 +136,11 @@ class OnlineActivity : AppCompatActivity() {
         var servingCellRAC = 0
         var servingCellId = 0
 
+        val loc = GpsMyLocationProvider(applicationContext)
+        if (loc.lastKnownLocation != null) {
+            lat = loc.lastKnownLocation.altitude
+            lon = loc.lastKnownLocation.longitude
+        }else{}
         //Set an instance of telephony manager
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
@@ -92,7 +149,6 @@ class OnlineActivity : AppCompatActivity() {
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
-
         //Check type of network and assign parameters to signal strength and quality
         val cellInfoList = tm.allCellInfo
         //Put location check high priority to check
@@ -105,7 +161,7 @@ class OnlineActivity : AppCompatActivity() {
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
 
-        //Build a listener to check whether the location is on or not
+//        Build a listener to check whether the location is on or not
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
         task.addOnSuccessListener { locationSettingsResponse ->
@@ -146,6 +202,10 @@ class OnlineActivity : AppCompatActivity() {
                         neighborCellSignalStrength = gsm.dbm
                     }
                 }
+
+                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lat.toDouble(), longtitude = lon.toDouble())
+                //db?.LTECellDao()?.insert(info)
+                cellViewModel?.LTEinsert(info)
             }
         }
 

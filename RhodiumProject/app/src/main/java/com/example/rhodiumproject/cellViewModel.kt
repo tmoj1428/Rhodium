@@ -35,6 +35,7 @@ class CellViewModel(application: Application) : AndroidViewModel(application) {
     fun LTEinsert(cell: LTE_Cell) = viewModelScope.launch(Dispatchers.IO) {
         LTErepository.insert(cell)
     }
+
     //fun LTEinsert(cell: UMTS_Cell) = viewModelScope.launch(Dispatchers.IO) {
     //    UMTSrepository.insert(cell)
     //}
