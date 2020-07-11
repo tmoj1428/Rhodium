@@ -1,13 +1,11 @@
 package com.example.rhodiumproject
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.drawable.BitmapDrawable
 import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
@@ -18,11 +16,15 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
+import android.text.Layout
+import android.view.View
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.drawable.toDrawable
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
@@ -30,7 +32,9 @@ import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
+import org.osmdroid.views.overlay.MapEventsOverlay
 import org.osmdroid.views.overlay.Marker
+import org.osmdroid.views.overlay.infowindow.InfoWindow
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
@@ -65,16 +69,10 @@ class OnlineActivity : AppCompatActivity() {
         map?.overlays?.add(mLocationOverlay)
         mLocationOverlay.enableFollowLocation()
         mLocationOverlay.isDrawAccuracyEnabled
-
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         getLastLocation()
 
         db = CellRoomDatabase.getDatabase(context = this)
-//        val handler = Handler()
-//        handler.postDelayed({
-//            map?.controller?.setZoom(18)
-//            map?.controller?.setCenter(mLocationOverlay.myLocation)
-//        }, 5000)
         requestPermissionsIfNecessary(
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -229,18 +227,27 @@ class OnlineActivity : AppCompatActivity() {
                     }
                 }
                 var flag = true
-                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lat.toFloat(), longtitude = lon.toFloat())
+                println("flag1 : " + flag.toString())
+                var templat = ((lat * 1000).toInt()).toFloat() / 1000
+                var templon = ((lon * 1000).toInt()).toFloat() / 1000
+                //println("temp : " + templat.toString())
+                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false)
+                println("RSRP1 : " + servingCellSignalStrength.toString())
                 var list = db?.LTECellDao()?.AllCell()
                 if (list != null) {
                     for (cell in list){
-                        if(cell.altitude == lat.toFloat() && cell.longtitude == lon.toFloat()){
-                            db?.LTECellDao()?.updateUsers(info)
+                        if(cell.altitude == templat && cell.longtitude == templon){
+                            var info1 = LTE_Cell(ID = cell.ID, cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false)
+                            db?.LTECellDao()?.updateUsers(info1)
                             flag = false
+                            println("flag2 : " + flag.toString())
+                            println("RSRP2 : " + cell.RSRP.toString())
                         }
                     }
                 }
                 if (flag) {
                     db?.LTECellDao()?.insert(info)
+                    println("flag4 : " + flag.toString())
                 }
             }
         }
@@ -311,31 +318,25 @@ class OnlineActivity : AppCompatActivity() {
             for (cell in list)
             {
                 val startPoint = GeoPoint(cell.altitude.toDouble(), cell.longtitude.toDouble())
-                val signalPower = "Cell strength : " + cell.RSRP
-                val signalQuality = "Cell Quality : " + cell.RSRQ
-                if(cell.RSRP?.toInt() ?: 0 > -80) {
-                    val startMarker = Marker(map)
+                val startMarker = Marker(map)
+                if (cell.RSRP?.toInt() ?: 0 > -80){
+                    startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.GREEN
-                    startMarker.textLabelForegroundColor = Color.BLACK
-                    startMarker.setTextIcon(signalPower + signalQuality)
-                    startMarker.setPosition(startPoint)
+                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
                     map?.overlays?.add(startMarker)
-                }else if(cell.RSRP?.toInt() ?: 0 < -80 && cell.RSRP?.toInt() ?: 0 > -90){
-                    val startMarker = Marker(map)
+                }else if(cell.RSRP?.toInt()!! < -80 && cell.RSRP?.toInt()!! > -90){
+                    startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.YELLOW
-                    startMarker.textLabelForegroundColor = Color.BLACK
-                    startMarker.setTextIcon(signalPower + signalQuality)
-                    startMarker.setPosition(startPoint)
+                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
                     map?.overlays?.add(startMarker)
-                }
-                else{
-                    val startMarker = Marker(map)
+                }else{
+                    startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.RED
-                    startMarker.textLabelForegroundColor = Color.BLACK
-                    startMarker.setTextIcon(signalPower + signalQuality)
-                    startMarker.setPosition(startPoint)
+                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
                     map?.overlays?.add(startMarker)
                 }
+                val info = LTE_Cell(cellId = cell.cellId, RSRP = cell.RSRP, RSRQ = cell.RSRQ, CINR = cell.CINR, TAC = cell.TAC, PLMN = cell.PLMN, altitude = cell.altitude, longtitude = cell.longtitude, pointer = true)
+                db?.LTECellDao()?.updateUsers(info)
             }
         }
     }

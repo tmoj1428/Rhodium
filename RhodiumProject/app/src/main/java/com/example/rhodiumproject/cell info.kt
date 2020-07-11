@@ -20,7 +20,9 @@ data class LTE_Cell(
     var TAC: String?,
     var PLMN: String?,
     var altitude: Float,
-    var longtitude: Float
+    var longtitude: Float,
+    @ColumnInfo(defaultValue = "false")
+    var pointer: Boolean
 )
 
 @Entity(tableName = "UMTS_table")

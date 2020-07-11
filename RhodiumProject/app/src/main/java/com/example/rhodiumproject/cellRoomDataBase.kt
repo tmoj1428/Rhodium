@@ -77,7 +77,7 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     LTECellDao.deleteAll()
 
                     // Add sample words.
-                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1", 35.6892.toFloat(), 51.3890.toFloat())
+                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1", 35.6892.toFloat(), 51.3890.toFloat(), false)
                     LTECellDao.insert(LTE_Cell)
                     //LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2", "2")
                     //LTECellDao.insert(LTE_Cell)
