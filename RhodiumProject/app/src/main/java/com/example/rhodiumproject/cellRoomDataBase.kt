@@ -77,7 +77,7 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     LTECellDao.deleteAll()
 
                     // Add sample words.
-                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1", 35.6892, 51.3890)
+                    var LTE_Cell= LTE_Cell(1, "1", "1", "1", "1", "1", "1", 35.6892.toFloat(), 51.3890.toFloat())
                     LTECellDao.insert(LTE_Cell)
                     //LTE_Cell = LTE_Cell(2, "2", "2", "2", "2", "2", "2")
                     //LTECellDao.insert(LTE_Cell)
@@ -97,8 +97,8 @@ abstract class CellRoomDatabase : RoomDatabase() {
         private var INSTANCE: CellRoomDatabase? = null
 
         fun getDatabase(
-            context: Context,
-            scope: CoroutineScope
+            context: Context
+           // scope: CoroutineScope
         ): CellRoomDatabase {
             // if the INSTANCE is not null, then return it,
             // if it is, then create the database
@@ -108,7 +108,7 @@ abstract class CellRoomDatabase : RoomDatabase() {
                     CellRoomDatabase::class.java,
                     "cell_database"
                 )
-                    .addCallback(CellDatabaseCallback(scope))
+                    .allowMainThreadQueries()
                     .build()
                 INSTANCE = instance
                 return instance

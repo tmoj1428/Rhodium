@@ -2,9 +2,13 @@ package com.example.rhodiumproject
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "LTE_table")
+@Entity(tableName = "LTE_table", indices = arrayOf(
+    Index(value = ["altitude", "longtitude"],
+        unique = true)
+))
 data class LTE_Cell(
     @PrimaryKey (autoGenerate = true)
     @ColumnInfo(name = "ID")
@@ -15,8 +19,8 @@ data class LTE_Cell(
     var CINR: String?,
     var TAC: String?,
     var PLMN: String?,
-    var altitude: Double,
-    var longtitude: Double
+    var altitude: Float,
+    var longtitude: Float
 )
 
 @Entity(tableName = "UMTS_table")

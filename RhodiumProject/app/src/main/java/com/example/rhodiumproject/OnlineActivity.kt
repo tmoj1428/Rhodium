@@ -1,12 +1,15 @@
 package com.example.rhodiumproject
 
-//import androidx.lifecycle.observe
 import android.Manifest
 import android.content.Context
 import android.content.IntentSender
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.location.Location
+import android.location.LocationManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -15,46 +18,47 @@ import android.telephony.CellInfoGsm
 import android.telephony.CellInfoLte
 import android.telephony.CellInfoWcdma
 import android.telephony.TelephonyManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.toDrawable
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 import com.google.android.gms.tasks.Task
-import org.osmdroid.api.IMapController
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import org.osmdroid.views.overlay.PathOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import java.util.*
 
-
 class OnlineActivity : AppCompatActivity() {
     private val REQUEST_PERMISSIONS_REQUEST_CODE = 1
-//    private val newCellActivityRequestCode = 1
-//    private lateinit var cellViewModel: CellViewModel
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private var db:CellRoomDatabase? = null
     private var map: MapView? = null
-    private var cellViewModel: CellViewModel? = null
-    private var mapController: IMapController? = map?.controller
     private val startPoint: GeoPoint = GeoPoint(35.6892, 51.3890)
     private var lat = 0.0
     private var lon = 0.0
     protected val REQUEST_CHECK_SETTINGS = 0x1
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         setContentView(R.layout.activity_online)
         val ctx = applicationContext
         Configuration.getInstance().load(ctx, PreferenceManager.getDefaultSharedPreferences(ctx))
+
         map = findViewById<MapView>(R.id.map)
         map?.controller?.setZoom(12)
         map?.controller?.setCenter(startPoint)
         map?.setBuiltInZoomControls(true)
         map?.setMultiTouchControls(true)
         map?.setTileSource(TileSourceFactory.MAPNIK)
+
         val loc = GpsMyLocationProvider(applicationContext)
         var mLocationOverlay = MyLocationNewOverlay(loc, map)
         mLocationOverlay.enableMyLocation()
@@ -62,17 +66,15 @@ class OnlineActivity : AppCompatActivity() {
         mLocationOverlay.enableFollowLocation()
         mLocationOverlay.isDrawAccuracyEnabled
 
-        val startPoint = GeoPoint(35.6892, 51.3890)
-        val startMarker = Marker(map)
-        startMarker.setPosition(startPoint)
-        map?.overlays?.add(startMarker)
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        getLastLocation()
 
-
-        val handler = Handler()
-        handler.postDelayed({
-            map?.controller?.setZoom(18)
-            map?.controller?.setCenter(mLocationOverlay.myLocation)
-        }, 5000)
+        db = CellRoomDatabase.getDatabase(context = this)
+//        val handler = Handler()
+//        handler.postDelayed({
+//            map?.controller?.setZoom(18)
+//            map?.controller?.setCenter(mLocationOverlay.myLocation)
+//        }, 5000)
         requestPermissionsIfNecessary(
             arrayOf(
                 Manifest.permission.ACCESS_FINE_LOCATION,
@@ -83,43 +85,71 @@ class OnlineActivity : AppCompatActivity() {
         mainHandler.post(object : Runnable {
             override fun run() {
                 LTESignalStrength()
+                pointer()
                 mainHandler.postDelayed(this, 5000)
             }
         })
-
-//        val recyclerView = findViewById<RecyclerView>(R.id.recyclerview)
-//        val adapter = CellListAdapter(this)
-//        recyclerView.adapter = adapter
-//        recyclerView.layoutManager = LinearLayoutManager(this)
-//
-//        cellViewModel = ViewModelProvider(this).get(CellViewModel::class.java)
-//        cellViewModel.LTE_allCells.observe(this, androidx.lifecycle.Observer{ cell -> cell?.let { adapter.setCells(it) }} )
-//
-//        val fab = findViewById<FloatingActionButton>(R.id.fab)
-//        fab.setOnClickListener {
-//            val intent = Intent(this@OnlineActivity, NewCellActivity::class.java)
-//            startActivityForResult(intent, newCellActivityRequestCode)
-//        }
     }
 
-//    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        super.onActivityResult(requestCode, resultCode, data)
-//
-//        if (requestCode == newCellActivityRequestCode && resultCode == Activity.RESULT_OK) {
-//            data?.getStringArrayExtra(NewCellActivity.EXTRA_REPLY)?.let {
-//                val LTEcell = LTE_Cell(it[0].toInt(), it[1], it[2], it[3], it[4], it[5], it[6])
-//
-//                cellViewModel.LTEinsert(LTEcell)
-//            }
-//        }
-//        else {
-//            Toast.makeText(
-//                applicationContext,
-//                "",
-//                Toast.LENGTH_LONG
-//            ).show()
-//        }
-//    }
+    private fun isLocationEnabled(): Boolean {
+        var locationManager: LocationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(
+            LocationManager.NETWORK_PROVIDER
+        )
+    }
+
+    private fun getLastLocation() {
+        if (isLocationEnabled()) {
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                return
+            }
+            fusedLocationClient.lastLocation.addOnCompleteListener(this) { task ->
+                task.result
+                requestNewLocationData()
+            }
+        } else {
+            Toast.makeText(this, "Turn on location", Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun requestNewLocationData() {
+        var mLocationRequest = LocationRequest()
+        mLocationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        mLocationRequest.interval = 9000
+        mLocationRequest.fastestInterval = 5000
+
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        fusedLocationClient.requestLocationUpdates(
+            mLocationRequest, mLocationCallback,
+            Looper.myLooper()
+        )
+    }
+
+    private val mLocationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            var mLastLocation: Location = locationResult.lastLocation
+            lat = mLastLocation.latitude
+            lon = mLastLocation.longitude
+        }
+    }
+
 
     private fun LTESignalStrength (){
 
@@ -136,11 +166,6 @@ class OnlineActivity : AppCompatActivity() {
         var servingCellRAC = 0
         var servingCellId = 0
 
-        val loc = GpsMyLocationProvider(applicationContext)
-        if (loc.lastKnownLocation != null) {
-            lat = loc.lastKnownLocation.altitude
-            lon = loc.lastKnownLocation.longitude
-        }else{}
         //Set an instance of telephony manager
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
 
@@ -149,6 +174,7 @@ class OnlineActivity : AppCompatActivity() {
         if (permission != PackageManager.PERMISSION_GRANTED) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_COARSE_LOCATION), 1)
         }
+
         //Check type of network and assign parameters to signal strength and quality
         val cellInfoList = tm.allCellInfo
         //Put location check high priority to check
@@ -161,7 +187,7 @@ class OnlineActivity : AppCompatActivity() {
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
 
-//        Build a listener to check whether the location is on or not
+      //Build a listener to check whether the location is on or not
         val client: SettingsClient = LocationServices.getSettingsClient(this)
         val task: Task<LocationSettingsResponse> = client.checkLocationSettings(builder.build())
         task.addOnSuccessListener { locationSettingsResponse ->
@@ -202,10 +228,20 @@ class OnlineActivity : AppCompatActivity() {
                         neighborCellSignalStrength = gsm.dbm
                     }
                 }
-
-                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lat.toDouble(), longtitude = lon.toDouble())
-                //db?.LTECellDao()?.insert(info)
-                cellViewModel?.LTEinsert(info)
+                var flag = true
+                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = lat.toFloat(), longtitude = lon.toFloat())
+                var list = db?.LTECellDao()?.AllCell()
+                if (list != null) {
+                    for (cell in list){
+                        if(cell.altitude == lat.toFloat() && cell.longtitude == lon.toFloat()){
+                            db?.LTECellDao()?.updateUsers(info)
+                            flag = false
+                        }
+                    }
+                }
+                if (flag) {
+                    db?.LTECellDao()?.insert(info)
+                }
             }
         }
 
@@ -265,6 +301,42 @@ class OnlineActivity : AppCompatActivity() {
                 permissionsToRequest.toArray(arrayOfNulls(0)),
                 REQUEST_PERMISSIONS_REQUEST_CODE
             )
+        }
+    }
+
+    private fun pointer()
+    {
+        var list = db?.LTECellDao()?.AllCell()
+        if (list != null) {
+            for (cell in list)
+            {
+                val startPoint = GeoPoint(cell.altitude.toDouble(), cell.longtitude.toDouble())
+                val signalPower = "Cell strength : " + cell.RSRP
+                val signalQuality = "Cell Quality : " + cell.RSRQ
+                if(cell.RSRP?.toInt() ?: 0 > -80) {
+                    val startMarker = Marker(map)
+                    startMarker.textLabelBackgroundColor = Color.GREEN
+                    startMarker.textLabelForegroundColor = Color.BLACK
+                    startMarker.setTextIcon(signalPower + signalQuality)
+                    startMarker.setPosition(startPoint)
+                    map?.overlays?.add(startMarker)
+                }else if(cell.RSRP?.toInt() ?: 0 < -80 && cell.RSRP?.toInt() ?: 0 > -90){
+                    val startMarker = Marker(map)
+                    startMarker.textLabelBackgroundColor = Color.YELLOW
+                    startMarker.textLabelForegroundColor = Color.BLACK
+                    startMarker.setTextIcon(signalPower + signalQuality)
+                    startMarker.setPosition(startPoint)
+                    map?.overlays?.add(startMarker)
+                }
+                else{
+                    val startMarker = Marker(map)
+                    startMarker.textLabelBackgroundColor = Color.RED
+                    startMarker.textLabelForegroundColor = Color.BLACK
+                    startMarker.setTextIcon(signalPower + signalQuality)
+                    startMarker.setPosition(startPoint)
+                    map?.overlays?.add(startMarker)
+                }
+            }
         }
     }
 }

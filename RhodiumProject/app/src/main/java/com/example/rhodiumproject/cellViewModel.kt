@@ -21,7 +21,7 @@ class CellViewModel(application: Application) : AndroidViewModel(application) {
     //val GSM_allCells: LiveData<List<GSM_Cell>>
 
     init {
-        val LTE_cellsDao = CellRoomDatabase.getDatabase(application, viewModelScope).LTECellDao()
+        val LTE_cellsDao = CellRoomDatabase.getDatabase(application).LTECellDao()
         //val UMTS_cellsDao = CellRoomDatabase.getDatabase(application, viewModelScope).UMTSCellDao()
         //val GSM_cellsDao = CellRoomDatabase.getDatabase(application, viewModelScope).GSMCellDao()
         LTErepository = LTECellRepository(LTE_cellsDao)
