@@ -163,6 +163,7 @@ class OnlineActivity : AppCompatActivity() {
         var servingCellPLMN = ""
         var servingCellRAC = 0
         var servingCellId = 0
+        var cellType = ""
 
         //Set an instance of telephony manager
         val tm = getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
@@ -198,6 +199,7 @@ class OnlineActivity : AppCompatActivity() {
                         servingCellTAC =  cellInfo.cellIdentity.tac
                         servingCellPLMN = tm.networkOperator
                         servingCellId =  cellInfo.cellIdentity.ci
+                        cellType = "LTE"
                     }
                     else if (cellInfo is CellInfoWcdma && servingCellSignalStrength == 0) {
                         val b = cellInfo.cellSignalStrength.dbm
@@ -205,12 +207,14 @@ class OnlineActivity : AppCompatActivity() {
                         servingCellLAC = cellInfo.cellIdentity.lac
                         servingCellPLMN = tm.networkOperator
                         servingCellId = cellInfo.cellIdentity.cid
+                        cellType = "WCDMA"
                     } else if (cellInfo is CellInfoGsm && servingCellSignalStrength == 0) {
                         val gsm = cellInfo.cellSignalStrength
                         servingCellSignalStrength = gsm.dbm
                         servingCellPLMN = tm.networkOperator
                         servingCellLAC =  cellInfo.cellIdentity.lac
                         servingCellId = cellInfo.cellIdentity.cid
+                        cellType = "GSM"
                     }
 
                 }else{
@@ -231,13 +235,13 @@ class OnlineActivity : AppCompatActivity() {
                 var templat = ((lat * 1000).toInt()).toFloat() / 1000
                 var templon = ((lon * 1000).toInt()).toFloat() / 1000
                 //println("temp : " + templat.toString())
-                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false)
+                val info = LTE_Cell(cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false, cellType = cellType)
                 println("RSRP1 : " + servingCellSignalStrength.toString())
                 var list = db?.LTECellDao()?.AllCell()
                 if (list != null) {
                     for (cell in list){
                         if(cell.altitude == templat && cell.longtitude == templon){
-                            var info1 = LTE_Cell(ID = cell.ID, cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false)
+                            var info1 = LTE_Cell(ID = cell.ID, cellId = servingCellId.toString(), RSRP = servingCellSignalStrength.toString(), RSRQ = servingCellSignalQuality.toString(), CINR = servingCellSignalnoise.toString(), TAC = servingCellTAC.toString(), PLMN = servingCellPLMN, altitude = templat, longtitude = templon, pointer = false, cellType = cellType)
                             db?.LTECellDao()?.updateUsers(info1)
                             flag = false
                             println("flag2 : " + flag.toString())
@@ -313,29 +317,30 @@ class OnlineActivity : AppCompatActivity() {
 
     private fun pointer()
     {
-        var list = db?.LTECellDao()?.AllCell()
+        val list = db?.LTECellDao()?.AllCell()
         if (list != null) {
             for (cell in list)
             {
                 val startPoint = GeoPoint(cell.altitude.toDouble(), cell.longtitude.toDouble())
                 val startMarker = Marker(map)
+                val text = "Connection Strength : " + cell.RSRP + "\n" + " Connection Quality : " + cell.RSRQ + "\n" + "Network type is : " + cell.cellType
                 if (cell.RSRP?.toInt() ?: 0 > -80){
                     startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.GREEN
-                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
+                    startMarker.setTextIcon(text)
                     map?.overlays?.add(startMarker)
                 }else if(cell.RSRP?.toInt()!! < -80 && cell.RSRP?.toInt()!! > -90){
                     startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.YELLOW
-                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
+                    startMarker.setTextIcon(text)
                     map?.overlays?.add(startMarker)
                 }else{
                     startMarker.setPosition(startPoint)
                     startMarker.textLabelBackgroundColor = Color.RED
-                    startMarker.setTextIcon("Connection Strength : " + cell.RSRP + " Connection Quality : " + cell.RSRQ)
+                    startMarker.setTextIcon(text)
                     map?.overlays?.add(startMarker)
                 }
-                val info = LTE_Cell(cellId = cell.cellId, RSRP = cell.RSRP, RSRQ = cell.RSRQ, CINR = cell.CINR, TAC = cell.TAC, PLMN = cell.PLMN, altitude = cell.altitude, longtitude = cell.longtitude, pointer = true)
+                val info = LTE_Cell(cellId = cell.cellId, RSRP = cell.RSRP, RSRQ = cell.RSRQ, CINR = cell.CINR, TAC = cell.TAC, PLMN = cell.PLMN, altitude = cell.altitude, longtitude = cell.longtitude, pointer = true, cellType = cell.cellType)
                 db?.LTECellDao()?.updateUsers(info)
             }
         }

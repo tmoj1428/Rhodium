@@ -21,7 +21,6 @@
         <activity android:name=".NewCellActivity" />
         <activity android:name=".OfilineActivity" />
         <activity android:name=".OnlineActivity" />
-        <activity android:name=".mapActivity" />
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
